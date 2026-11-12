@@ -1,0 +1,51 @@
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const packs = [
+    ["PLANET",["PLANET","PLANE","PLANT","PLATE","PANEL","PLANE","LATE","TALE","NEAT","LEAN"]],
+    ["GARDEN",["GARDEN","ANGER","RANGE","DANGER","GEAR","DEAR","READ","DARE","NEAR"]],
+    ["STREAM",["STREAM","MASTER","TAMER","TEARS","STARE","STEAM","MEAT","TEAM","EAST"]],
+    ["SILENT",["SILENT","LISTEN","ENLIST","TINSEL","LINES","TILES","NEST","LENT","TENS"]],
+    ["CANDLE",["CANDLE","CLEAN","DANCE","LANCE","LAND","LANE","DEAL","LEAD","ACNE"]],
+    ["ORANGE",["ORANGE","ANGER","RANGE","ORGAN","GEAR","GONE","NEAR","EARN","RANG"]],
+    ["CASTLE",["CASTLE","SCALE","SLATE","STALE","STEAL","TALES","LACE","SEAL","EAST"]],
+    ["POETRY",["POETRY","PORE","PORE","POET","ROPE","TORE","TYPE","YORE","TOY"]],
+    ["BRIGHT",["BRIGHT","BIRTH","RIGHT","GIRTH","GRIT","GIRL","BITE","RIB","HIT"]],
+    ["CREDIT",["CREDIT","TRICE","TRIED","RICE","TIRE","TIDE","EDIT","RIDE","TIER"]],
+    ["RESCUE",["RESCUE","SECURE","CURES","CURE","USER","SURE","RUSE","SUE","USE"]],
+    ["THRONE",["THRONE","OTHER","THORN","NORTH","NOTE","TONE","THEN","RENT","HONE"]],
+    ["MARKET",["MARKET","MAKER","TAMER","TAKER","TEAM","MEAT","RATE","MAKE","TAKE"]],
+    ["FATHER",["FATHER","HEART","EARTH","HATER","HEAR","HEAT","RATE","FEAR","FAR"]],
+    ["GUITAR",["GUITAR","TRIAGE","GUITAR","GRIT","GAIT","TRIG","RUG","AIR","RAG"]],
+    ["POCKET",["POCKET","POKE","POET","COPE","COKE","TOCK","PECK","TOP","PET"]],
+    ["SILVER",["SILVER","LIVER","RIVES","VEIL","LIVE","EVIL","VILE","RISE","SIRE"]],
+    ["FLOWER",["FLOWER","LOWER","FOWER","WOLF","FOWL","FLOW","ROLE","WORE","FLEW"]],
+    ["PLANES",["PLANES","PLANE","PANEL","PLANS","PENS","LEAN","SALE","SEAL","PEAL"]],
+    ["GLOVES",["GLOVES","GLOVE","LOVES","GLOE","LOSE","SOLE","LOGE","LOVE","SLOG"]]
+  ];
+  const extras = new Set(("ABLE ACID ACT AGE AGO AIR ALE ALL AND ANT ANY APE ARC ARE ARM ART ASH ASK ATE BAD BAG BAR BAT BAY BED BEE BEG BET BIG BIT BOW BOX BOY BUS BUT BUY CAB CAN CAP CAR CAT COB COD COP COT COW CUE CUP CUT DAY DEN DID DIE DIG DIM DIP DOG DOT DRY DUE EAR EAT EEL EGG ELF END ERA EVE EYE FAN FAR FAT FED FEE FEW FIG FIN FIR FIT FIX FLY FOG FOR FOX FRY FUN GAP GAS GAY GEL GET GIG GIN GOD GOT GUM GUN GUT GUY HAD HAM HAS HAT HAY HEN HER HID HIM HIP HIS HIT HOG HOT HOW HUG HUT ICE ILL INK INN ION ITS JAM JAR JAW JET JOB JOY KEY KID KIN KIT LAB LAD LAG LAP LAW LAY LED LEG LET LID LIE LIP LIT LOG LOT LOW MAD MAN MAP MAT MAY MEN MET MIX MOB MOD MOP MUD MUG NAG NAP NET NEW NOD NOR NOT NOW NUN NUT OAK OAR OAT ODD OFF OFT OIL OLD ONE OUR OUT OWE OWL OWN PAD PAL PAN PAR PAT PAW PAY PEA PEE PEN PER PET PIE PIG PIN PIT POD POP POT PUT RAG RAN RAP RAT RAW RAY RED REF RIB RID RIG RIP ROB ROD ROT ROW RUB RUG RUM RUN SAD SAG SAP SAT SAW SAY SEA SEE SET SEW SHE SHY SIN SIP SIR SIT SIX SKI SKY SOB SOD SON SOP SOT SOU SPA SPY SUN TAB TAG TAN TAP TAR TAX TEA TEN THE TIE TIN TIP TOE TON TOO TOP TOY TRY TUB TUG TWO USE VAN VAT VET VIA VIE VOW WAR WAS WAY WEB WED WET WHO WHY WIN WIT WOK WON WOO WOW YAK YAM YAP YAW YES YET YOU ZAP ZEN").split(" "));
+  const state = {level:1,coins:120,hints:0,found:new Set(),bonus:new Set(),selected:[],letters:[],sound:false};
+  const packForLevel = n => packs[(n-1)%packs.length];
+  const targetWords = pack => [...new Set(pack[1])].filter(w=>w.length>=3).sort((a,b)=>a.length-b.length||a.localeCompare(b));
+  const save = () => { try { localStorage.setItem("wordhaven-save",JSON.stringify({level:state.level,coins:state.coins})); } catch(e){} };
+  const load = () => { try { const s=JSON.parse(localStorage.getItem("wordhaven-save")||"{}"); if(Number.isInteger(s.level)&&s.level>0)state.level=s.level;if(Number.isInteger(s.coins)&&s.coins>=0)state.coins=s.coins; } catch(e){} };
+  const show = id => { ["home-screen","game-screen","complete-screen"].forEach(x=>$(x).classList.toggle("hidden",x!==id)); };
+  const updateCoins = () => { $("coin-count").textContent=state.coins; $("hint-button").querySelector("b").textContent=state.hints?state.hints:20; };
+  const setFeedback = (msg,type="") => { $("feedback").textContent=msg; $("feedback").className="feedback "+type; };
+  const shuffled = a => { const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b; };
+  const currentPack = () => packForLevel(state.level);
+  function renderHome(){ $("home-level").textContent="Level "+state.level;$("home-progress").textContent=state.level===1?"A fresh beginning":"Your next quiet challenge awaits";updateCoins(); }
+  function renderBoard(){ const pack=currentPack(),words=targetWords(pack);$("word-board").innerHTML="";words.forEach(word=>{const slot=document.createElement("div");slot.className="word-slot"+(state.found.has(word)?" found":"");slot.setAttribute("aria-label",state.found.has(word)?word:word.length+" letters");for(let i=0;i<word.length;i++){const cell=document.createElement("span");cell.className="slot-letter";cell.textContent=state.found.has(word)?word[i]:"";slot.appendChild(cell);} $("word-board").appendChild(slot);});$("found-count").textContent=state.found.size+" / "+words.length+" words";$("bonus-count").textContent="✦ "+state.bonus.size+" bonus";$("progress-fill").style.width=(state.found.size/words.length*100)+"%"; }
+  function renderLetters(){ const wheel=$("letter-wheel");wheel.innerHTML="";const count=state.letters.length,cx=150,cy=state.letters.length>7?82:83,rx=state.letters.length>7?111:100,ry=state.letters.length>7?69:67;state.letters.forEach((letter,i)=>{const angle=(-Math.PI/2)+(2*Math.PI*i/count);const tile=document.createElement("button");tile.type="button";tile.className="letter-tile";tile.textContent=letter;tile.dataset.index=i;tile.style.left=(cx+Math.cos(angle)*rx)+"px";tile.style.top=(cy+Math.sin(angle)*ry)+"px";tile.addEventListener("pointerdown",e=>{e.preventDefault();beginSelect(i);});wheel.appendChild(tile);}); }
+  function renderCurrent(){ $("current-word").textContent=state.selected.map(i=>state.letters[i]).join("");document.querySelectorAll(".letter-tile").forEach(t=>t.classList.toggle("selected",state.selected.includes(Number(t.dataset.index)))); }
+  function beginSelect(i){if(state.selected.includes(i))return;state.selected.push(i);renderCurrent();setFeedback("Keep connecting letters");}
+  function resetSelection(){state.selected=[];renderCurrent();}
+  function startLevel(){state.found.clear();state.bonus.clear();state.selected=[];state.letters=currentPack()[0].split("");$("level-title").textContent="Level "+state.level;renderBoard();renderLetters();renderCurrent();setFeedback("Swipe or tap letters to make a word");show("game-screen");}
+  function submit(){const word=state.selected.map(i=>state.letters[i]).join("");if(!word){setFeedback("Choose a few letters first","bad");return;}const targets=targetWords(currentPack());if(targets.includes(word)){if(state.found.has(word)){setFeedback("You already found that word","bad");}else{state.found.add(word);setFeedback("Lovely find. Keep going!","good");renderBoard();if(state.found.size===targets.length){setTimeout(completeLevel,450);}}}else if(word.length>=3&&extras.has(word)){if(state.bonus.has(word)){setFeedback("That bonus word is already counted","bad");}else{state.bonus.add(word);state.coins+=2;updateCoins();save();setFeedback("Bonus word! +2 coins","good");renderBoard();}}else{setFeedback("Not a word in this puzzle. Try another","bad");}resetSelection();}
+  function completeLevel(){const reward=30+state.bonus.size*2;state.coins+=reward;updateCoins();$("earned-coins").textContent=reward;save();show("complete-screen");}
+  function hint(){const words=targetWords(currentPack()),remaining=words.filter(w=>!state.found.has(w));if(!remaining.length)return; if(state.coins<20){setFeedback("You need 20 coins for a hint","bad");return;}state.coins-=20;const word=remaining[0];const idx=word.split("").findIndex((ch,i)=>!state.found.has(word));const slot=[...$("word-board").children].find((el,i)=>words[i]===word);if(slot){slot.classList.add("found");const cells=slot.querySelectorAll(".slot-letter");cells.forEach((c,i)=>{c.textContent=i===idx?word[i]:"";c.style.color=i===idx?"#b18a48":"";});setTimeout(()=>{if(!state.found.has(word))renderBoard();},1800);}updateCoins();save();setFeedback("A little clue: "+word.length+" letters. Look for "+word[idx]+"…","good");}
+  $("play-button").addEventListener("click",startLevel);$("home-button").addEventListener("click",()=>{renderHome();show("home-screen");});$("submit-button").addEventListener("click",submit);$("clear-button").addEventListener("click",()=>{resetSelection();setFeedback("Letters cleared");});$("shuffle-button").addEventListener("click",()=>{state.letters=shuffled(state.letters);resetSelection();renderLetters();setFeedback("Letters shuffled");});$("hint-button").addEventListener("click",hint);$("next-button").addEventListener("click",()=>{state.level++;save();renderHome();startLevel();});$("replay-button").addEventListener("click",startLevel);
+  $("how-button").addEventListener("click",()=>$("help-dialog").showModal());$("close-help").addEventListener("click",()=>$("help-dialog").close());$("got-it").addEventListener("click",()=>$("help-dialog").close());$("sound-toggle").addEventListener("click",e=>{state.sound=!state.sound;e.currentTarget.textContent=state.sound?"♫":"♪";e.currentTarget.setAttribute("aria-label",state.sound?"Sound on":"Sound off");});
+  let pointerActive=false;const wheel=$("letter-wheel");wheel.addEventListener("pointermove",e=>{if(!pointerActive)return;const el=document.elementFromPoint(e.clientX,e.clientY)?.closest(".letter-tile");if(el&&wheel.contains(el))beginSelect(Number(el.dataset.index));});wheel.addEventListener("pointerup",()=>{pointerActive=false;if(state.selected.length>=3)submit();});wheel.addEventListener("pointercancel",()=>{pointerActive=false;});wheel.addEventListener("pointerdown",()=>{pointerActive=true;});
+  load();renderHome();if("serviceWorker" in navigator&&location.protocol.startsWith("http"))window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+})();
