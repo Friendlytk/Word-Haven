@@ -26,9 +26,11 @@ Open `index.html` in a browser. For full PWA/offline testing, serve the folder o
 
 The expected site URL is `https://friendlytk.github.io/Word-Haven/`.
 
-## Install on Android
+## Install on Android and play offline
 
-After the site is published over HTTPS, open it in Chrome on Android and use **Install app** or **Add to Home screen**. A signed APK wrapper can be added in a later phase.
+After the site is published over HTTPS, open it in Chrome on Android, allow the first load to finish while online, then use **Install app** (or the browser menu → **Add to Home screen**). Open the installed Word Haven app once while online so the service worker can cache the game files and the dictionary can finish saving to IndexedDB. After that initial setup, the installed game can launch and play offline. Progress and coins are stored locally on that device.
+
+This is an installable PWA, not a signed APK. A native APK package is a separate build step and is not included yet.
 
 ## Project files
 
