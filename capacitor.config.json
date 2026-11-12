@@ -1,0 +1,9 @@
+{
+  "appId": "com.friendlytk.wordhaven",
+  "appName": "Word Haven",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
