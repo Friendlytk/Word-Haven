@@ -32,11 +32,11 @@
     try {
       const db=await openDictionaryDB();
       const cached=await new Promise((resolve,reject)=>{const tx=db.transaction("wordlists","readonly");const req=tx.objectStore("wordlists").get("english-3-6-v1");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
-      if(Array.isArray(cached)){dictionary=new Set([...extras,...cached]);dictionaryReady=true;db.close();return;}
+      if(Array.isArray(cached)){dictionary=new Set([...extras,...cached]);dictionaryReady=true;db.close();if(!$("game-screen").classList.contains("hidden"))setFeedback("Extended English dictionary ready.","good");return;}
       const response=await fetch(DICTIONARY_URL,{cache:"force-cache"});
       if(!response.ok)throw new Error("Dictionary download failed");
       const source=await response.text();
-      const words=source.toLowerCase().split(/\\s+/).filter(word=>/^[a-z]{3,6}$/.test(word));
+      const words=source.toLowerCase().split(/\s+/).filter(word=>/^[a-z]{3,6}$/.test(word));
       dictionary=new Set([...extras,...words]);
       await new Promise((resolve,reject)=>{const tx=db.transaction("wordlists","readwrite");tx.objectStore("wordlists").put(words,"english-3-6-v1");tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
       dictionaryReady=true;db.close();
@@ -62,7 +62,7 @@
   function renderCurrent(){ $("current-word").textContent=state.selected.map(i=>state.letters[i]).join("");document.querySelectorAll(".letter-tile").forEach(t=>t.classList.toggle("selected",state.selected.includes(Number(t.dataset.index)))); }
   function beginSelect(i){if(state.selected.includes(i))return;state.selected.push(i);renderCurrent();setFeedback("Keep connecting letters");}
   function resetSelection(){state.selected=[];renderCurrent();}
-  function startLevel(){state.found.clear();state.bonus.clear();state.selected=[];state.letters=currentPack()[0].split("");$("level-title").textContent="Level "+state.level;renderBoard();renderLetters();renderCurrent();setFeedback("Swipe or tap letters to make a word");show("game-screen");}
+  function startLevel(){state.found.clear();state.bonus.clear();state.selected=[];state.letters=currentPack()[0].split("");$("level-title").textContent="Level "+state.level;renderBoard();renderLetters();renderCurrent();setFeedback(dictionaryReady?"Swipe or tap letters to make a word":"Loading extended dictionary; starter words are available meanwhile.");show("game-screen");}
   function submit(){const word=state.selected.map(i=>state.letters[i]).join("");if(!word){setFeedback("Choose a few letters first","bad");return;}const targets=targetWords(currentPack());if(targets.includes(word)){if(state.found.has(word)){setFeedback("You already found that word","bad");}else{state.found.add(word);setFeedback("Lovely find. Keep going!","good");renderBoard();if(state.found.size===targets.length){setTimeout(completeLevel,450);}}}else if(word.length>=3&&word.length<=6&&dictionary.has(word.toLowerCase())){if(state.bonus.has(word)){setFeedback("That bonus word is already counted","bad");}else{state.bonus.add(word);state.coins+=2;updateCoins();save();setFeedback("Bonus word! +2 coins","good");renderBoard();}}else{setFeedback("Not a word in this puzzle. Try another","bad");}resetSelection();}
   function completeLevel(){const reward=30+state.bonus.size*2;state.coins+=reward;updateCoins();$("earned-coins").textContent=reward;save();show("complete-screen");}
   function hint(){const words=targetWords(currentPack()),remaining=words.filter(w=>!state.found.has(w));if(!remaining.length)return; if(state.coins<20){setFeedback("You need 20 coins for a hint","bad");return;}state.coins-=20;const word=remaining[0];const idx=word.split("").findIndex((ch,i)=>!state.found.has(word));const slot=[...$("word-board").children].find((el,i)=>words[i]===word);if(slot){slot.classList.add("found");const cells=slot.querySelectorAll(".slot-letter");cells.forEach((c,i)=>{c.textContent=i===idx?word[i]:"";c.style.color=i===idx?"#b18a48":"";});setTimeout(()=>{if(!state.found.has(word))renderBoard();},1800);}updateCoins();save();setFeedback("A little clue: "+word.length+" letters. Look for "+word[idx]+"…","good");}
