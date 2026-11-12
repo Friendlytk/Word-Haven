@@ -44,3 +44,10 @@ After the site is published over HTTPS, open it in Chrome on Android and use **I
 The first playable foundation has 20 puzzle templates mapped across 100 level numbers. The puzzle bank will be expanded with more unique boards, broader word validation, and tested difficulty progression in subsequent development phases.
 
 Word Haven is an original project inspired by the general word-connect puzzle genre. It does not use ZenWord's proprietary assets or branding.
+
+
+# Word Haven Dictionary Attribution
+
+The optional extended English word list is loaded from [dwyl/english-words](https://github.com/dwyl/english-words), specifically `words_alpha.txt`. The source repository describes this as a large alphabetic English word list and publishes it under the Unlicense. Word Haven filters the list to alphabetic entries of 3–6 letters and caches the filtered list locally in the browser's IndexedDB for subsequent offline play.
+
+The source list is broad and may contain rare, archaic, regional, or specialist terms. It is a general English word list, not a curated school dictionary or an official Scrabble word list.
