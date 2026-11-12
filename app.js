@@ -34,7 +34,8 @@
       const db=await openDictionaryDB();
       const cached=await new Promise((resolve,reject)=>{const tx=db.transaction("wordlists","readonly");const req=tx.objectStore("wordlists").get("english-2-6-v2");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
       if(Array.isArray(cached)){dictionary=new Set([...extras,...commonWords,...cached]);dictionaryReady=true;db.close();if(!$("game-screen").classList.contains("hidden"))setFeedback("Extended English dictionary ready.","good");return;}
-      const response=await fetch(DICTIONARY_URL,{cache:"force-cache"});
+      let response=await fetch("./words_alpha.txt",{cache:"force-cache"}).catch(()=>null);
+      if(!response||!response.ok)response=await fetch(DICTIONARY_URL,{cache:"force-cache"});
       if(!response.ok)throw new Error("Dictionary download failed");
       const source=await response.text();
       const words=source.toLowerCase().split(/\s+/).filter(word=>/^[a-z]{2,6}$/.test(word));
