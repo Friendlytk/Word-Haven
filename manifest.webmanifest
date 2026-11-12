@@ -1,0 +1,12 @@
+{
+  "name": "Word Haven",
+  "short_name": "Word Haven",
+  "description": "A calm, beautifully simple word-finding puzzle.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fbfaf6",
+  "theme_color": "#f4f1e8",
+  "icons": []
+}
