@@ -2,7 +2,7 @@
   "use strict";
   const $ = (id) => document.getElementById(id);
   const packs = [
-    ["PLANET",["PLANET","PLANE","PLANT","PLATE","PANEL","PLANE","LATE","TALE","NEAT","LEAN"]],
+    ["PLANET",["PLANET","PLATEN","PLANE","PLANT","PLATE","PANEL","LATE","TALE","NEAT","LEAN"]],
     ["GARDEN",["GARDEN","ANGER","RANGE","DANGER","GEAR","DEAR","READ","DARE","NEAR"]],
     ["STREAM",["STREAM","MASTER","TAMER","TEARS","STARE","STEAM","MEAT","TEAM","EAST"]],
     ["SILENT",["SILENT","LISTEN","ENLIST","TINSEL","LINES","TILES","NEST","LENT","TENS"]],
@@ -24,8 +24,8 @@
     ["GLOVES",["GLOVES","GLOVE","LOVES","LOSE","SOLE","LOGE","LOVE","SLOG"]]
   ];
   const extras = new Set(("ABLE ACID ACT AGE AGO AIR ALE ALL AND ANT ANY APE ARC ARE ARM ART ASH ASK ATE BAD BAG BAR BAT BAY BED BEE BEG BET BIG BIT BOW BOX BOY BUS BUT BUY CAB CAN CAP CAR CAT COB COD COP COT COW CUE CUP CUT DAY DEN DID DIE DIG DIM DIP DOG DOT DRY DUE EAR EAT EEL EGG ELF END ERA EVE EYE FAN FAR FAT FED FEE FEW FIG FIN FIR FIT FIX FLY FOG FOR FOX FRY FUN GAP GAS GAY GEL GET GIG GIN GOD GOT GUM GUN GUT GUY HAD HAM HAS HAT HAY HEN HER HID HIM HIP HIS HIT HOG HOT HOW HUG HUT ICE ILL INK INN ION ITS JAM JAR JAW JET JOB JOY KEY KID KIN KIT LAB LAD LAG LAP LAW LAY LED LEG LET LID LIE LIP LIT LOG LOT LOW MAD MAN MAP MAT MAY MEN MET MIX MOB MOD MOP MUD MUG NAG NAP NET NEW NOD NOR NOT NOW NUN NUT OAK OAR OAT ODD OFF OFT OIL OLD ONE OUR OUT OWE OWL OWN PAD PAL PAN PAR PAT PAW PAY PEA PEE PEN PER PET PIE PIG PIN PIT POD POP POT PUT RAG RAN RAP RAT RAW RAY RED REF RIB RID RIG RIP ROB ROD ROT ROW RUB RUG RUM RUN SAD SAG SAP SAT SAW SAY SEA SEE SET SEW SHE SHY SIN SIP SIR SIT SIX SKI SKY SOB SOD SON SOP SOT SOU SPA SPY SUN TAB TAG TAN TAP TAR TAX TEA TEN THE TIE TIN TIP TOE TON TOO TOP TOY TRY TUB TUG TWO USE VAN VAT VET VIA VIE VOW WAR WAS WAY WEB WED WET WHO WHY WIN WIT WOK WON WOO WOW YAK YAM YAP YAW YES YET YOU ZAP ZEN").split(" "));
-  const commonWords = new Set(("A AN AS AT BE BY DO GO HE IF IN IS IT ME MY NO OF OH ON OR OX SO TO UP US WE AM ARE THE AND ANY ALL CAN DID FOR GET HAD HAS HER HIM HIS HOW ITS LET MAN NEW NOT NOW OFF OLD ONE OUR OUT OWN PUT SAY SEE SHE TOO USE WAY WHO WHY YES YET YOU").toLowerCase().split(" "));
-  let dictionary = new Set([...extras,...commonWords]);
+  const commonWords = new Set(("PLATEN A AN AS AT BE BY DO GO HE IF IN IS IT ME MY NO OF OH ON OR OX SO TO UP US WE AM ARE THE AND ANY ALL CAN DID FOR GET HAD HAS HER HIM HIS HOW ITS LET MAN NEW NOT NOW OFF OLD ONE OUR OUT OWN PUT SAY SEE SHE TOO USE WAY WHO WHY YES YET YOU").toLowerCase().split(" "));
+  let dictionary = new Set([...extras,...commonWords].map(word=>word.toLowerCase()));
   let dictionaryReady = false;
   const DICTIONARY_URL = "https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt";
   function openDictionaryDB(){return new Promise((resolve,reject)=>{const request=indexedDB.open("word-haven-dictionary",1);request.onupgradeneeded=()=>request.result.createObjectStore("wordlists");request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});}
@@ -33,13 +33,13 @@
     try {
       const db=await openDictionaryDB();
       const cached=await new Promise((resolve,reject)=>{const tx=db.transaction("wordlists","readonly");const req=tx.objectStore("wordlists").get("english-2-6-v2");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
-      if(Array.isArray(cached)){dictionary=new Set([...extras,...commonWords,...cached]);dictionaryReady=true;db.close();if(!$("game-screen").classList.contains("hidden"))setFeedback("Extended English dictionary ready.","good");return;}
+      if(Array.isArray(cached)){dictionary=new Set([...extras,...commonWords,...cached].map(word=>word.toLowerCase()));dictionaryReady=true;db.close();if(!$("game-screen").classList.contains("hidden"))setFeedback("Extended English dictionary ready.","good");return;}
       let response=await fetch("./words_alpha.txt",{cache:"force-cache"}).catch(()=>null);
       if(!response||!response.ok)response=await fetch(DICTIONARY_URL,{cache:"force-cache"});
       if(!response.ok)throw new Error("Dictionary download failed");
       const source=await response.text();
       const words=source.toLowerCase().split(/\s+/).filter(word=>/^[a-z]{2,6}$/.test(word));
-      dictionary=new Set([...extras,...commonWords,...words]);
+      dictionary=new Set([...extras,...commonWords,...words].map(word=>word.toLowerCase()));
       await new Promise((resolve,reject)=>{const tx=db.transaction("wordlists","readwrite");tx.objectStore("wordlists").put(words,"english-2-6-v2");tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
       dictionaryReady=true;db.close();
     } catch(error) {
