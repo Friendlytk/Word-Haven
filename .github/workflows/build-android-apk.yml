@@ -43,10 +43,13 @@ jobs:
       - name: Install Capacitor
         run: npm install
 
-      - name: Prepare bundled game files
+      - name: Prepare bundled game files and Android launcher icon
         run: |
-          mkdir -p www
+          mkdir -p www assets
           cp index.html styles.css app.js manifest.webmanifest icon.svg sw.js www/
+          npm install --no-save sharp @capacitor/assets
+          node -e "require('sharp')('icon.svg').resize(1024,1024).png().toFile('assets/icon-only.png')"
+          npx capacitor-assets generate --android
           curl --fail --location --retry 3 https://raw.githubusercontent.com/wordnik/wordlist/main/wordlist-20210729.txt --output /tmp/wordnik.txt
           curl --fail --location --retry 3 https://raw.githubusercontent.com/dolph/dictionary/master/enable1.txt --output /tmp/enable.txt
           curl --fail --location --retry 3 https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt --output /tmp/english-words.txt
