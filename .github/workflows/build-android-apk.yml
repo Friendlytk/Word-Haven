@@ -50,40 +50,7 @@ jobs:
           curl --fail --location --retry 3 https://raw.githubusercontent.com/wordnik/wordlist/main/wordlist-20210729.txt --output /tmp/wordnik.txt
           curl --fail --location --retry 3 https://raw.githubusercontent.com/dolph/dictionary/master/enable1.txt --output /tmp/enable.txt
           curl --fail --location --retry 3 https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt --output /tmp/english-words.txt
-          cat /tmp/wordnik.txt /tmp/enable.txt /tmp/english-words.txt | tr '[:upper:]' '[:lower:]' | grep -E '^[a-z]{2,6}
-
-      - name: Generate Android project
-        run: npx cap add android
-
-      - name: Sync bundled web app
-        run: npx cap sync android
-
-      - name: Build installable debug APK
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug
-
-      - name: Upload APK build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Word-Haven-Android-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          retention-days: 30
-
-      - name: Publish APK download release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: word-haven-android-${{ github.run_number }}
-          name: Word Haven Android Build ${{ github.run_number }}
-          body: |
-            Installable Word Haven Android APK.
-            The game files and English word list are bundled inside the APK for offline play.
-            This is a debug-signed APK built for direct installation and testing.
-          files: android/app/build/outputs/apk/debug/app-debug.apk
-          make_latest: true
-          fail_on_unmatched_files: true | sort -u > www/words_alpha.txt
+          cat /tmp/wordnik.txt /tmp/enable.txt /tmp/english-words.txt | tr '[:upper:]' '[:lower:]' | grep -E '^[a-z]{2,6}$' | sort -u > www/words_alpha.txt
           test -s www/words_alpha.txt
 
       - name: Generate Android project
@@ -113,7 +80,7 @@ jobs:
           name: Word Haven Android Build ${{ github.run_number }}
           body: |
             Installable Word Haven Android APK.
-            The game files and English word list are bundled inside the APK for offline play.
+            The game files and combined English word lists are bundled inside the APK for offline play.
             This is a debug-signed APK built for direct installation and testing.
           files: android/app/build/outputs/apk/debug/app-debug.apk
           make_latest: true
