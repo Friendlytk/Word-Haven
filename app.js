@@ -51,7 +51,18 @@
   const state = {level:1,coins:120,hints:0,found:new Set(),bonus:new Set(),hinted:{},choosingHint:false,selected:[],letters:[],sound:false};
   const packForLevel = n => packs[(n-1)%packs.length];
   const wordLengthRange = level => level<=10?[3,4]:level<=20?[4,5]:[5,6];
-  const targetWords = pack => {const [min,max]=wordLengthRange(state.level);return [...new Set(pack[1])].filter(w=>w.length>=min&&w.length<=max).sort((a,b)=>a.length-b.length||a.localeCompare(b));};
+  const canMakeWord = (word,letters) => {const counts={};for(const ch of letters)counts[ch]=(counts[ch]||0)+1;for(const ch of word){if(!counts[ch])return false;counts[ch]--;}return true;};
+  const lettersForPack = (pack) => {
+    const [,max]=wordLengthRange(state.level),source=pack[0].split(""),words=[...new Set(pack[1])].filter(w=>w.length>=wordLengthRange(state.level)[0]&&w.length<=max);
+    let best=source.slice(0,max),bestScore=-1;
+    const choose=(start,selected)=>{
+      if(selected.length===max){const score=words.filter(w=>canMakeWord(w,selected)).length;if(score>bestScore){bestScore=score;best=selected.slice();}return;}
+      for(let i=start;i<=source.length-(max-selected.length);i++)choose(i+1,[...selected,source[i]]);
+    };
+    choose(0,[]);
+    return best;
+  };
+  const targetWords = pack => {const [min,max]=wordLengthRange(state.level),pool=state.letters.length?state.letters:lettersForPack(pack);return [...new Set(pack[1])].filter(w=>w.length>=min&&w.length<=max&&canMakeWord(w,pool)).sort((a,b)=>a.length-b.length||a.localeCompare(b));};
   const save = () => { try { localStorage.setItem("wordhaven-save",JSON.stringify({level:state.level,coins:state.coins})); } catch(e){} };
   const load = () => { try { const s=JSON.parse(localStorage.getItem("wordhaven-save")||"{}"); if(Number.isInteger(s.level)&&s.level>0)state.level=s.level;if(Number.isInteger(s.coins)&&s.coins>=0)state.coins=s.coins; } catch(e){} };
   const show = id => { ["home-screen","game-screen","complete-screen"].forEach(x=>$(x).classList.toggle("hidden",x!==id)); };
@@ -65,7 +76,7 @@
   function renderCurrent(){ $("current-word").textContent=state.selected.map(i=>state.letters[i]).join("");document.querySelectorAll(".letter-tile").forEach(t=>t.classList.toggle("selected",state.selected.includes(Number(t.dataset.index)))); }
   function beginSelect(i){if(state.selected.includes(i))return;state.selected.push(i);renderCurrent();setFeedback("Keep connecting letters");}
   function resetSelection(){state.selected=[];renderCurrent();}
-  function startLevel(){state.found.clear();state.bonus.clear();state.hinted={};state.choosingHint=false;state.selected=[];state.letters=currentPack()[0].split("");$("level-title").textContent="Level "+state.level;renderBoard();renderLetters();renderCurrent();const [min,max]=wordLengthRange(state.level);setFeedback(dictionaryReady?"Find "+min+"–"+max+" letter words. Swipe or tap letters.":"Loading extended dictionary; starter words are available meanwhile.");show("game-screen");}
+  function startLevel(){state.found.clear();state.bonus.clear();state.hinted={};state.choosingHint=false;state.selected=[];state.letters=lettersForPack(currentPack());$("level-title").textContent="Level "+state.level;renderBoard();renderLetters();renderCurrent();const [min,max]=wordLengthRange(state.level);setFeedback(dictionaryReady?"Find "+min+"–"+max+" letter words. Swipe or tap letters.":"Loading extended dictionary; starter words are available meanwhile.");show("game-screen");}
   function submit(){const word=state.selected.map(i=>state.letters[i]).join("");if(!word){setFeedback("Choose a few letters first","bad");return;}const targets=targetWords(currentPack());if(targets.includes(word)){if(state.found.has(word)){setFeedback("You already found that word","bad");}else{state.found.add(word);setFeedback("Lovely find. Keep going!","good");renderBoard();if(state.found.size===targets.length){setTimeout(completeLevel,450);}}}else if(word.length>=2&&word.length<=6&&dictionary.has(word.toLowerCase())){if(state.bonus.has(word)){setFeedback("That bonus word is already counted","bad");}else if(state.bonus.size>=5){setFeedback("You have reached this level’s 5-word bonus limit.","bad");}else{state.bonus.add(word);if(state.bonus.size===5){state.coins+=2;updateCoins();save();setFeedback("Bonus limit reached! +2 coins for this level","good");}else{setFeedback("Bonus word accepted · "+state.bonus.size+"/5","good");}renderBoard();}}else{setFeedback("Not a word in this puzzle. Try another","bad");}resetSelection();}
   function completeLevel(){const reward=30;state.coins+=reward;updateCoins();$("earned-coins").textContent=reward;save();show("complete-screen");}
   function hint(){const remaining=targetWords(currentPack()).filter(w=>!state.found.has(w));if(!remaining.length){setFeedback("All word boxes are already filled.","good");return;}if(state.coins<20){setFeedback("You need 20 coins for a hint","bad");return;}state.choosingHint=!state.choosingHint;renderBoard();setFeedback(state.choosingHint?"Choose the empty word box you want a hint for.":"Hint selection cancelled.");}
