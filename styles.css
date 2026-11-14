@@ -53,3 +53,5 @@ main{display:flex;flex:1;min-height:0;overflow:hidden}
  .current-word-wrap{min-height:34px}
  .feedback{margin-top:3px}
 }
+
+.word-slot.hint-selectable{cursor:pointer;outline:2px dashed var(--gold);outline-offset:3px;border-radius:9px;animation:hint-pulse 1.1s ease-in-out infinite alternate}.word-slot.hint-selectable:active{transform:scale(.97)}@keyframes hint-pulse{from{outline-color:#d4a95e}to{outline-color:#789b82}}
