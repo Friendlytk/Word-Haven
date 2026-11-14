@@ -32,7 +32,7 @@
   async function loadDictionary(){
     try {
       const db=await openDictionaryDB();
-      const cached=await new Promise((resolve,reject)=>{const tx=db.transaction("wordlists","readonly");const req=tx.objectStore("wordlists").get("english-2-6-v2");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+      const cached=await new Promise((resolve,reject)=>{const tx=db.transaction("wordlists","readonly");const req=tx.objectStore("wordlists").get("english-2-6-v3");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
       if(Array.isArray(cached)){dictionary=new Set([...extras,...commonWords,...cached].map(word=>word.toLowerCase()));dictionaryReady=true;db.close();if(!$("game-screen").classList.contains("hidden"))setFeedback("Extended English dictionary ready.","good");return;}
       let response=await fetch("./words_alpha.txt",{cache:"force-cache"}).catch(()=>null);
       if(!response||!response.ok)response=await fetch(DICTIONARY_URL,{cache:"force-cache"});
@@ -40,7 +40,7 @@
       const source=await response.text();
       const words=source.toLowerCase().split(/\s+/).filter(word=>/^[a-z]{2,6}$/.test(word));
       dictionary=new Set([...extras,...commonWords,...words].map(word=>word.toLowerCase()));
-      await new Promise((resolve,reject)=>{const tx=db.transaction("wordlists","readwrite");tx.objectStore("wordlists").put(words,"english-2-6-v2");tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
+      await new Promise((resolve,reject)=>{const tx=db.transaction("wordlists","readwrite");tx.objectStore("wordlists").put(words,"english-2-6-v3");tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
       dictionaryReady=true;db.close();
     } catch(error) {
       dictionaryReady=false;
