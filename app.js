@@ -52,17 +52,34 @@
   const packForLevel = n => packs[(n-1)%packs.length];
   const wordLengthRange = level => level<=10?[3,4]:level<=20?[4,5]:[5,6];
   const canMakeWord = (word,letters) => {const counts={};for(const ch of letters)counts[ch]=(counts[ch]||0)+1;for(const ch of word){if(!counts[ch])return false;counts[ch]--;}return true;};
+  const preferredWords = [
+    "THE AND FOR ARE BUT NOT YOU ALL CAN HER WAS ONE OUR OUT DAY GET HAS HIM HIS HOW MAN NEW NOW OLD SEE TWO WAY WHO BOY DID ITS LET SAY SHE TOO USE",
+    "ABLE ACID ALSO BACK BALL BAND BANK BARE BASE BATH BEAR BEAT BEEN BEST BIRD BLOW BLUE BOAT BODY BOOK BOTH BOWL CALL CAME CAMP CARE CASE CASH CITY COLD COME COST DARK DATE DEAL DEAR DEEP DOES DONE DOOR DOWN DRAW EACH EARN EAST EASY EVEN EVER FACE FACT FAIR FALL FARM FAST FEAR FEEL FEET FELL FELT FILE FILL FILM FIND FINE FIRE FISH FIVE FOOD FOOT FORM FOUR FREE FROM FULL GAME GAVE GEAR GIFT GIRL GIVE GOAL GOES GOLD GONE GOOD GROW HALF HAND HANG HARD HAVE HEAD HEAR HEAT HELD HELP HERE HERO HIGH HILL HOME HOPE HOST HOUR HUGE IDEA INTO IRON ITEM JOIN JUMP JUST KEEP KEPT KIND KING KNEW KNOW LAND LANE LAST LATE LEAD LEAN LEFT LESS LIFE LIFT LIKE LINE LINK LIST LIVE LONG LOOK LORD LOST LOVE MADE MAIN MAKE MANY MARK MEAN MEET MILE MIND MINE MISS MODE MORE MOST MOVE MUCH MUST NAME NEAR NEED NEWS NEXT NICE NINE NOTE ONCE ONLY OPEN OVER PAGE PAID PAIN PAIR PARK PART PASS PAST PATH PEAK PICK PILE PLAN PLAY POEM POET POOL POOR POST PULL PURE PUSH RACE RAIN RANK RATE READ REAL REST RICE RICH RIDE RING RISE ROAD ROCK ROLE ROOM ROOT ROSE RULE SAFE SAID SAME SAVE SEAT SEEN SELF SELL SEND SENT SHIP SHOP SHOW SIDE SIGN SIZE SKIN SLOW SNOW SOME SONG SOON SORT STAR STAY STEP STOP SUCH SURE TAKE TALE TALK TALL TEAM TELL TEND TERM TEST THAN THAT THEM THEN THEY THIN THIS TIME TINY TOLD TONE TOOK TOOL TOPS TOUR TOWN TREE TRIP TRUE TURN TYPE UNIT UPON USED USER VARY VERY VIEW VOTE WAIT WAKE WALK WALL WANT WARM WASH WAVE WAYS WEAR WEEK WELL WENT WERE WEST WHAT WHEN WIDE WIFE WILD WILL WIND WINE WING WISH WITH WORD WORK YEAR YOUR ZERO"
+  ].join(" ").toLowerCase().split(/\\s+/);
   const lettersForPack = (pack) => {
-    const [,max]=wordLengthRange(state.level),source=pack[0].split(""),words=[...new Set(pack[1])].filter(w=>w.length>=wordLengthRange(state.level)[0]&&w.length<=max);
+    const [min,max]=wordLengthRange(state.level),source=pack[0].split("");
+    const scoreLetters = selected => {
+      let count=0;
+      for(const word of dictionary){if(word.length>=min&&word.length<=max&&canMakeWord(word,selected))count++;}
+      for(const word of pack[1])if(word.length>=min&&word.length<=max&&canMakeWord(word,selected))count+=3;
+      return count;
+    };
     let best=source.slice(0,max),bestScore=-1;
     const choose=(start,selected)=>{
-      if(selected.length===max){const score=words.filter(w=>canMakeWord(w,selected)).length;if(score>bestScore){bestScore=score;best=selected.slice();}return;}
+      if(selected.length===max){const score=scoreLetters(selected);if(score>bestScore){bestScore=score;best=selected.slice();}return;}
       for(let i=start;i<=source.length-(max-selected.length);i++)choose(i+1,[...selected,source[i]]);
     };
     choose(0,[]);
     return best;
   };
-  const targetWords = pack => {const [min,max]=wordLengthRange(state.level),pool=state.letters.length?state.letters:lettersForPack(pack);return [...new Set(pack[1])].filter(w=>w.length>=min&&w.length<=max&&canMakeWord(w,pool)).sort((a,b)=>a.length-b.length||a.localeCompare(b));};
+  const targetWords = pack => {
+    const [min,max]=wordLengthRange(state.level),pool=state.letters.length?state.letters:lettersForPack(pack);
+    const makeable=word=>word.length>=min&&word.length<=max&&canMakeWord(word,pool);
+    const preferred=[...new Set(pack[1])].filter(makeable);
+    const common=preferredWords.filter(word=>!preferred.includes(word.toUpperCase())&&makeable(word.toUpperCase())).map(word=>word.toUpperCase());
+    const generated=[...dictionary].filter(makeable).sort((a,b)=>a.length-b.length||a.localeCompare(b)).map(word=>word.toUpperCase());
+    return [...new Set([...preferred,...common,...generated])].slice(0,12).sort((a,b)=>a.length-b.length||a.localeCompare(b));
+  };
   const save = () => { try { localStorage.setItem("wordhaven-save",JSON.stringify({level:state.level,coins:state.coins})); } catch(e){} };
   const load = () => { try { const s=JSON.parse(localStorage.getItem("wordhaven-save")||"{}"); if(Number.isInteger(s.level)&&s.level>0)state.level=s.level;if(Number.isInteger(s.coins)&&s.coins>=0)state.coins=s.coins; } catch(e){} };
   const show = id => { ["home-screen","game-screen","complete-screen"].forEach(x=>$(x).classList.toggle("hidden",x!==id)); };
