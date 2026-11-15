@@ -1,5 +1,5 @@
-const CACHE = "word-haven-v9";
-const CORE = ["./","./index.html","./styles.css","./app.js","./manifest.webmanifest","./icon.svg"];
+const CACHE = "word-haven-v10";
+const CORE = ["./","./index.html","./styles.css","./app.js","./manifest.webmanifest","./icon.svg","./icon.png"];
 self.addEventListener("install",event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()));
 });
