@@ -43,21 +43,21 @@ jobs:
       - name: Install Capacitor
         run: npm install
 
+      - name: Generate Android project
+        run: npx cap add android
+
       - name: Prepare bundled game files and Android launcher icon
         run: |
           mkdir -p www assets
           cp index.html styles.css app.js manifest.webmanifest icon.svg sw.js www/
           npm install --no-save sharp @capacitor/assets
-          node -e "require('sharp')('icon.svg').resize(1024,1024).png().toFile('assets/icon-only.png')"
+          node -e "const sharp=require('sharp'); Promise.all([sharp('icon.svg').resize(1024,1024).png().toFile('assets/icon-only.png'),sharp('icon.svg').resize(512,512).png().toFile('www/icon.png')]).catch(e=>{console.error(e);process.exit(1)})"
           npx capacitor-assets generate --android
           curl --fail --location --retry 3 https://raw.githubusercontent.com/wordnik/wordlist/main/wordlist-20210729.txt --output /tmp/wordnik.txt
           curl --fail --location --retry 3 https://raw.githubusercontent.com/dolph/dictionary/master/enable1.txt --output /tmp/enable.txt
           curl --fail --location --retry 3 https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt --output /tmp/english-words.txt
           cat /tmp/wordnik.txt /tmp/enable.txt /tmp/english-words.txt | tr '[:upper:]' '[:lower:]' | grep -E '^[a-z]{2,6}$' | sort -u > www/words_alpha.txt
           test -s www/words_alpha.txt
-
-      - name: Generate Android project
-        run: npx cap add android
 
       - name: Sync bundled web app
         run: npx cap sync android
